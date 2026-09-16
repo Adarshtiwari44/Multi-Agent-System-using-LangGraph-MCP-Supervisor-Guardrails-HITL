@@ -2,7 +2,9 @@ import os
 import certifi
 from dotenv import load_dotenv
 
+
 load_dotenv()
+
 os.environ["SSL_CERT_FILE"] = certifi.where()
 os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
 
@@ -10,29 +12,29 @@ from typing import Any, TypedDict, Annotated
 import operator
 import uuid
 import asyncio
-import json
+
 import psycopg
 from psycopg.rows import dict_row
-from langgraph.graph import StateGraph, START, END
+import json
+
+from langgraph.graph import StateGraph, START , END
 from langgraph.checkpoint.postgres import PostgresSaver
-from langgraph.types import Command, interrupt
-from langchain_core.messages import (
+from langgraph.types import Command,interrupt
+
+from langchain_core.messages import(
     AnyMessage,
     HumanMessage,
     AIMessage,
     SystemMessage,
 )
 from langchain_groq import ChatGroq
-
-
+from tools.filght_tool import search_flights
 from mcp_client import (
     tavily_mcp_search,
-    aviation_mcp_call,
     extract_destination,
     forecast_mcp_search,
-    weather_mcp_search,
+    weather_mcp_search
 )
-
 
 def get_database_url():
     database_url = os.getenv("DATABASE_URL")
@@ -59,7 +61,7 @@ if not GROQ_API_KEY:
 # LLM - original model kept
 # =========================
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     api_key=GROQ_API_KEY,
 )
 
@@ -143,6 +145,12 @@ def _empty_constraints() -> dict[str, Any]:
         "travel_style": "",
         "special_preferences": [],
     }
+
+def limit_text(text, max_chars=3000):
+    text = str(text or "")
+    if len(text) > max_chars:
+        return text[:max_chars] + "\n...[truncated]"
+    return text
 
 
 # =========================
@@ -294,61 +302,172 @@ def guardrail_blocked_agent(state: TravelState):
 # =========================
 # Flight Agent - original behavior kept
 # =========================
-FLIGHT_AGENT_PROMPT = """
-You are a travel flight expert.
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
-User Query:
+
+FLIGHT_AGENT_PROMPT = """
+You are an expert travel flight planning agent.
+
+Your job is to analyze the user's flight request and the flight search results
+and provide concise, accurate, practical travel guidance.
+
+USER QUERY:
 {query}
 
-Airport Information:
-{airport_data}
+FLIGHT SEARCH RESULTS:
+{flight_data}
 
-Airline Information:
-{airline_data}
+Analyze the available flight information and provide:
 
-Generate:
-1. Likely departure airport
-2. Likely arrival airport
-3. Airlines serving this route
-4. Typical flight duration
-5. Estimated airfare range
-6. Peak season pricing warning
-7. Booking advice
+1. Departure Airport
+   - Identify the likely departure airport.
+   - Mention airport code if available.
 
-Return concise travel guidance.
+2. Arrival Airport
+   - Identify the likely destination airport.
+   - Mention airport code if available.
+
+3. Available Airlines
+   - List the airlines found in the search results.
+   - Do not invent airlines that are not present in the data.
+
+4. Flight Options
+   - Mention the most relevant available flights.
+   - Include departure/arrival times, duration, stops, and flight number
+     when available.
+
+5. Flight Duration
+   - Give the typical or available duration.
+   - Clearly distinguish between direct and connecting flights.
+
+6. Estimated Airfare
+   - Report the price/range only if present in the search results.
+   - Mention the currency.
+   - Never invent a price.
+
+7. Peak Season Warning
+   - If the travel date appears to fall during a busy period, mention that
+     prices and availability may change.
+   - If there is not enough information, say so instead of guessing.
+
+8. Booking Advice
+   - Give practical advice based on the available results.
+   - Mention factors such as price, duration, number of stops, baggage,
+     cancellation policy, and departure time when relevant.
+
+IMPORTANT RULES:
+- Use the provided flight search results as the primary source.
+- Do not hallucinate flight numbers, airlines, prices, airports, or timings.
+- If information is missing, explicitly say "Not available in the search results."
+- Prefer direct flights when they provide a reasonable option, but do not
+  claim they are better unless explaining the trade-off.
+- Keep the response concise and easy to understand.
+- Use a clean structured format.
+
+Return the result in this format:
+
+✈️ FLIGHT SUMMARY
+
+🛫 Departure:
+...
+
+🛬 Arrival:
+...
+
+✈️ Airlines:
+...
+
+🕐 Flight Options:
+...
+
+⏱️ Duration:
+...
+
+💰 Fare:
+...
+
+📅 Peak Season:
+...
+
+💡 Booking Advice:
+...
 """
 
 
 def flight_agent(state: TravelState):
     print("\nINSIDE FLIGHT AGENT\n")
+
     query = state["user_query"]
 
     try:
-        airports = asyncio.run(aviation_mcp_call("list_airports"))
-        airlines = asyncio.run(aviation_mcp_call("list_airlines"))
+        # ------------------------------------------
+        # 1. Fetch flight data using your API/tool
+        # ------------------------------------------
+        flight_data = search_flights(query)
 
-        print("\nAIRPORTS:", airports)
-        print("\nAIRLINES:", airlines)
+        if not flight_data:
+            return {
+                "flight_results": "No flight results found for the requested route/date.",
+                "messages": [
+                    AIMessage(content="No flight results found.")
+                ],
+                "llm_calls": state.get("llm_calls", 0),
+            }
 
+        print("\nRAW FLIGHT DATA:")
+        print(flight_data)
+
+        # ------------------------------------------
+        # 2. Limit huge API response
+        # ------------------------------------------
+        flight_data_str = str(flight_data)
+
+        if len(flight_data_str) > 3000:
+            flight_data_str = flight_data_str[:3000] + "\n...[truncated]"
+
+        # ------------------------------------------
+        # 3. Build LLM prompt
+        # ------------------------------------------
         prompt = FLIGHT_AGENT_PROMPT.format(
             query=query,
-            airport_data=str(airports)[:3000],
-            airline_data=str(airlines)[:3000],
+            flight_data=flight_data_str
         )
 
+        # ------------------------------------------
+        # 4. Ask LLM to analyze results
+        # ------------------------------------------
         response = llm.invoke(
             [
-                SystemMessage(content="You are an expert travel flight planner."),
+                SystemMessage(
+                    content=(
+                        "You are a reliable flight planning assistant. "
+                        "Use only the provided search data and never invent "
+                        "flight information."
+                    )
+                ),
                 HumanMessage(content=prompt),
             ]
         )
-        flight_data = response.content
+
+        # ------------------------------------------
+        # 5. Final formatted result
+        # ------------------------------------------
+        result = response.content
+
     except Exception as exc:
-        flight_data = f"Flight information unavailable: {exc}"
+        print(f"\nFLIGHT AGENT ERROR: {exc}")
+
+        result = (
+            "Flight information is currently unavailable. "
+            "Please try again with the departure city, destination, "
+            "and travel date."
+        )
 
     return {
-        "flight_results": flight_data,
-        "messages": [AIMessage(content="Flight recommendations generated")],
+        "flight_results": result,
+        "messages": [
+            AIMessage(content="Flight recommendations generated.")
+        ],
         "llm_calls": state.get("llm_calls", 0) + 1,
     }
 
@@ -457,13 +576,13 @@ Trip Constraints:
 {state.get('trip_constraints', {})}
 
 Flight Results:
-{state.get('flight_results', '')}
+{limit_text(state.get('flight_results', ''), 1800)}
 
 Hotel Results:
-{state.get('hotel_results', '')}
+{limit_text(state.get('hotel_results', ''), 1800)}
 
 Weather Results:
-{state.get('weather_results', '')}
+{limit_text(state.get('weather_results', ''), 1800)}
 
 Return:
 1. Estimated cost categories
@@ -502,16 +621,16 @@ Trip Constraints:
 {state.get('trip_constraints', {})}
 
 Flight Results:
-{state.get('flight_results', '')}
+{limit_text(state.get('flight_results', ''), 1800)}
 
 Hotel Results:
-{state.get('hotel_results', '')}
+{limit_text(state.get('hotel_results', ''), 1800)}
 
 Weather Results:
-{state.get('weather_results', '')}
+{limit_text(state.get('weather_results', ''), 1800)}
 
 Budget Results:
-{state.get('budget_results', '')}
+{limit_text(state.get('budget_results', ''), 1800)}
 
 Make the itinerary practical, budget-aware, and easy to follow.
 Create a clear draft that is ready for human review.
@@ -593,19 +712,19 @@ Supervisor Constraints:
 {state.get('trip_constraints', {})}
 
 Flights:
-{state.get('flight_results', '')}
+{limit_text(state.get('flight_results', ''), 1800)}
 
 Hotels:
-{state.get('hotel_results', '')}
+{limit_text(state.get('hotel_results', ''), 1800)}
 
 Weather:
-{state.get('weather_results', '')}
+{limit_text(state.get('weather_results', ''), 1800)}
 
 Budget Analysis:
-{state.get('budget_results', '')}
+{limit_text(state.get('budget_results', ''), 1800)}
 
 Draft Itinerary:
-{state.get('itinerary', '')}
+{limit_text(state.get('itinerary', ''), 1800)}
 
 Format the final answer beautifully using these sections:
 1. Trip Summary
