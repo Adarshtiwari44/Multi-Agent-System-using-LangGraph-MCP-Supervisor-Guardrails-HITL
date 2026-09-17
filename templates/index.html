@@ -3,69 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TripMate AI</title>
+  <title>TripMate AI — Turn Travel Dreams Into Real Trips</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="page-bg">
-    <div class="gradient-circle circle-1"></div>
-    <div class="gradient-circle circle-2"></div>
-    <div class="gradient-circle circle-3"></div>
+  <!-- Full Screen Background Image with Overlay -->
+  <div class="hero-bg-container">
+    <div class="hero-bg-image"></div>
+    <div class="hero-bg-overlay"></div>
   </div>
 
-  <main class="app-container">
-    <section class="hero-section">
-      <div class="badge">
-        ✈️ TripMate AI — LangGraph, MCP, Supervisor, Guardrails & HITL
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="brand-title">TripMate <span class="brand-ai">AI</span></span>
+          <span class="brand-subtitle">Plan Less. Explore More.</span>
+        </div>
       </div>
-      <h1>Plan Your Perfect Trip with AI</h1>
-      <p>
-        Search flights, discover hotels, check weather, assess your budget,
-        and review the AI-generated draft before the final itinerary is created.
-      </p>
+
+      <nav class="nav-links">
+        <a href="#" class="nav-link active">Home</a>
+        <a href="#planner" class="nav-link">Destinations</a>
+        <a href="#planner" class="nav-link">Trip Planner</a>
+        <a href="#planner" class="nav-link">About</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="btn-start-planning" onclick="document.getElementById('userInput').focus()">Start Planning &rarr;</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Hero Layout -->
+  <main class="app-container" id="planner">
+    
+    <!-- Hero Header & Content -->
+    <section class="hero-section">
+      <!-- Decorative Signpost on the right -->
+      <div class="signpost-decoration">
+        <div class="signpost-plank plank-1">NEW CITIES</div>
+        <div class="signpost-plank plank-2">BIGGER STORIES</div>
+        <div class="signpost-plank plank-3">HAPPIER YOU</div>
+      </div>
+
+      <!-- Airplane & Dotted Flight Trail Annotation -->
+      <div class="airplane-annotation">
+        <svg class="flight-path-svg" viewBox="0 0 160 60" fill="none">
+          <path d="M10 50 C 40 10, 110 10, 150 25" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        </svg>
+        <span class="handwritten-annotation">Explore Discover Belong ♡</span>
+      </div>
+
+      <!-- Floating handwritten note left -->
+      <div class="handwritten-quote-left">
+        Good Trips<br>Better Stories ♡
+      </div>
+
+      <!-- Main Typography Content -->
+      <div class="hero-content">
+        <div class="eyebrow-badge">
+          YOUR AI TRAVEL AGENT
+        </div>
+        
+        <h1 class="hero-title">
+          Turn Travel Dreams Into <span class="cyan-gradient-text">Real Trips</span>
+        </h1>
+        
+        <p class="hero-subtitle">
+          Get personalized itineraries, best flights, hotel suggestions and<br class="desktop-only">
+          unforgettable experiences — all powered by AI.
+        </p>
+
+        <!-- Feature Pills -->
+        <div class="feature-badges">
+          <div class="feature-badge">
+            <div class="badge-icon icon-flight">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+              </svg>
+            </div>
+            <div class="badge-text">
+              <span class="badge-title">Flights</span>
+              <span class="badge-sub">Best deals</span>
+            </div>
+          </div>
+
+          <div class="feature-badge">
+            <div class="badge-icon icon-hotel">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
+              </svg>
+            </div>
+            <div class="badge-text">
+              <span class="badge-title">Hotels</span>
+              <span class="badge-sub">Top stays</span>
+            </div>
+          </div>
+
+          <div class="feature-badge">
+            <div class="badge-icon icon-itinerary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/>
+              </svg>
+            </div>
+            <div class="badge-text">
+              <span class="badge-title">Itinerary</span>
+              <span class="badge-sub">Custom plans</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
+    <!-- Clean Rounded Search / Input Card Area -->
     <section class="planner-card">
-      <div class="card-header">
-        <div>
-          <h2>Where do you want to go?</h2>
-          <p>
-            Example: Plan a complete 7 days Japan trip from Bangladesh under 2 lakhs.
-          </p>
+      <div class="search-capsule">
+        <div class="search-sparkle-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="#00d2ff"/>
+          </svg>
         </div>
-        <div class="status-pill">
-          <span class="status-dot"></span>
-          Online
-        </div>
-      </div>
-
-      <div class="input-area">
+        
         <textarea
           id="userInput"
-          placeholder="Plan a complete 7 days Japan trip including flights, hotels and sightseeing under 2 lakhs..."
+          rows="1"
+          placeholder="Where do you want to go? (e.g. Paris, Japan, Bali)"
         ></textarea>
-        <button id="sendBtn" onclick="sendMessage()">
-          <span id="btnText">Generate Draft</span>
+
+        <button id="sendBtn" onclick="sendMessage()" aria-label="Send query">
+          <span id="btnText">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+            </svg>
+          </span>
           <span id="btnLoader" class="loader hidden"></span>
         </button>
       </div>
 
+      <!-- Quick Prompt Suggestions -->
       <div class="quick-prompts">
+        <span class="prompts-label">Popular queries:</span>
         <button onclick="setPrompt('Plan a complete 7 days Japan trip from Bangladesh including flights, hotels and sightseeing under 2 lakhs.')">
-          Japan Trip
+          🇯🇵 Japan 7 Days
         </button>
         <button onclick="setPrompt('Plan a 5 days Dubai trip from Dhaka with flights, hotels and sightseeing.')">
-          Dubai Trip
+          🇦🇪 Dubai 5 Days
         </button>
         <button onclick="setPrompt('Plan a 7 days Thailand trip from Bangladesh with budget hotels and sightseeing.')">
-          Thailand Trip
+          🇹🇭 Thailand 7 Days
         </button>
         <button onclick="setPrompt('Give me all country flight info.')">
-          Global Flights
+          ✈️ Global Flights
         </button>
       </div>
     </section>
 
+    <!-- Execution Plan / Workflow Section -->
     <section id="workflowSection" class="workflow-section hidden">
       <div class="workflow-header">
         <div>
@@ -78,6 +181,7 @@
       <div id="agentChips" class="agent-chips"></div>
     </section>
 
+    <!-- Result Output Section -->
     <section id="resultSection" class="result-section hidden">
       <div class="result-header">
         <div>
@@ -85,8 +189,8 @@
           <p id="threadInfo">Thread ID: -</p>
         </div>
         <div class="result-actions">
-          <button class="copy-btn" onclick="copyResult()">Copy</button>
-          <button class="download-btn" onclick="downloadPDF()">Download PDF</button>
+          <button class="copy-btn" onclick="copyResult()">📋 Copy</button>
+          <button class="download-btn" onclick="downloadPDF()">📄 Download PDF</button>
         </div>
       </div>
 
@@ -96,6 +200,7 @@
       </div>
     </section>
 
+    <!-- Human-in-the-Loop Approval Section -->
     <section id="approvalSection" class="approval-section hidden">
       <div class="approval-icon">👤</div>
       <div class="approval-content">
@@ -113,20 +218,21 @@
 
         <div class="approval-actions">
           <button id="approveBtn" class="approve-btn" onclick="submitApproval(true)">
-            Approve & Generate Final
+            ✓ Approve & Generate Final
           </button>
           <button id="reviseBtn" class="revise-btn" onclick="submitApproval(false)">
-            Revise Using Feedback
+            ✏️ Revise Using Feedback
           </button>
         </div>
       </div>
     </section>
 
+    <!-- Error Box -->
     <section id="errorBox" class="error-box hidden"></section>
   </main>
 
   <footer>
-    Built with FastAPI, LangGraph, Groq, PostgreSQL, Tavily, AviationStack and MCP
+    TripMate AI &copy; 2026 — Built with FastAPI, LangGraph, Groq, PostgreSQL, Tavily, AviationStack & MCP
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
